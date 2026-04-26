@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>POS — Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --cream: #FAF8F5;
+            --white: #FFFFFF;
+            --stone: #E8E4DE;
+            --muted: #A89F94;
+            --text: #2C2825;
+            --text-light: #7A726A;
+            --accent: #C4A882;
+            --accent-dark: #A8896A;
+            --success: #5A8A6A;
+            --success-bg: #EEF5F0;
+            --error: #C4624A;
+            --error-bg: #FDF0ED;
+            --tab-h: 64px;
+            --topbar-h: 52px;
+        }
+
+        html { height: 100%; }
+        body { height: 100%; background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(--text); overflow: hidden; }
+
+        /* TOPBAR */
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+            background: var(--white); border-bottom: 1px solid var(--stone);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 18px; z-index: 100;
+        }
+        .brand { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; letter-spacing: 0.02em; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--stone);
+            background: transparent; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-light); font-size: 16px;
+        }
+        .icon-btn:hover { background: var(--error-bg); color: var(--error); border-color: var(--error); }
+
+        /* SEGMENT CONTROL */
+        .segment-wrap { padding: 14px 16px 0; background: var(--white); border-bottom: 1px solid var(--stone); }
+        .segment {
+            display: flex; background: var(--cream); border-radius: 12px; padding: 3px; margin-bottom: 14px;
+        }
+        .seg-btn {
+            flex: 1; padding: 9px; border-radius: 10px; border: none; background: transparent;
+            font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text-light);
+            cursor: pointer; transition: all 0.2s; font-weight: 400;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .seg-btn.active { background: var(--white); color: var(--text); font-weight: 500; box-shadow: 0 1px 4px rgba(44,40,37,0.1); }
+
+        /* SCREENS */
+        .screens { position: fixed; top: calc(var(--topbar-h) + 58px); bottom: var(--tab-h); left: 0; right: 0; overflow: hidden; }
+        .screen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; opacity: 0; pointer-events: none; transform: translateY(6px); transition: opacity 0.2s, transform 0.2s; }
+        .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+        /* SCREEN PRODUCTS */
+        #screenProducts { padding: 16px; }
+        #screenUsers { padding: 16px; }
+
+        .screen-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .section-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .btn-add {
+            padding: 7px 14px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* PRODUCT LIST */
+        .item-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .product-row {
+            background: var(--white); border: 1px solid var(--stone); border-radius: 14px;
+            padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .product-row.inactive { opacity: 0.5; }
+
+        .prod-info { flex: 1; }
+        .prod-name { font-size: 15px; font-weight: 500; }
+        .prod-price { font-size: 13px; color: var(--accent-dark); margin-top: 2px; font-weight: 500; }
+
+        .prod-actions { display: flex; gap: 8px; }
+
+        .action-btn {
+            width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--stone);
+            background: var(--cream); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 15px; transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .action-btn:active { background: var(--stone); }
+        .action-btn.danger:active { background: var(--error-bg); border-color: var(--error); }
+
+        .toggle-btn {
+            padding: 5px 10px; border-radius: 8px; border: 1px solid var(--stone);
+            background: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 11px;
+            color: var(--text-light); cursor: pointer; white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .toggle-btn.active-state { background: var(--success-bg); border-color: rgba(90,138,106,0.3); color: var(--success); }
+
+        /* USER LIST */
+        .user-row {
+            background: var(--white); border: 1px solid var(--stone); border-radius: 14px;
+            padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .user-row.inactive { opacity: 0.5; }
+
+        .user-avatar {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--cream);
+            border: 1px solid var(--stone); display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .user-info { flex: 1; }
+        .user-name { font-size: 15px; font-weight: 500; }
+        .user-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .user-badge-role {
+            font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 500;
+        }
+        .user-badge-role.admin { background: rgba(196,168,130,0.2); color: var(--accent-dark); }
+        .user-badge-role.cajero { background: var(--cream); color: var(--text-light); border: 1px solid var(--stone); }
+
+        /* EMPTY */
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 13px; }
+
+        /* BOTTOM TABS */
+        .bottom-tabs {
+            position: fixed; bottom: 0; left: 0; right: 0; height: var(--tab-h);
+            background: var(--white); border-top: 1px solid var(--stone); display: flex; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 3px; cursor: pointer; border: none; background: transparent;
+            color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px;
+            -webkit-tap-highlight-color: transparent; text-decoration: none;
+        }
+        .tab-item.active { color: var(--accent-dark); font-weight: 500; }
+        .tab-icon { font-size: 20px; line-height: 1; }
+
+        /* MODAL SHEET */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(44,40,37,0.45);
+            z-index: 300; display: flex; align-items: flex-end;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-sheet {
+            background: var(--white); border-radius: 24px 24px 0 0;
+            padding: 20px 24px 40px; width: 100%;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-overlay.show .modal-sheet { transform: translateY(0); }
+        .modal-handle { width: 36px; height: 4px; background: var(--stone); border-radius: 2px; margin: 0 auto 20px; }
+        .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; margin-bottom: 20px; }
+
+        .field-group { margin-bottom: 16px; }
+        .field-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+        .field-input {
+            width: 100%; padding: 13px 16px; border: 1px solid var(--stone); border-radius: 12px;
+            font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text);
+            background: var(--cream); outline: none; -webkit-appearance: none;
+        }
+        .field-input:focus { border-color: var(--accent); background: white; }
+
+        .toggle-field {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; background: var(--cream); border: 1px solid var(--stone); border-radius: 12px;
+        }
+        .toggle-field-label { font-size: 15px; color: var(--text); }
+
+        .toggle-switch { position: relative; width: 44px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: var(--stone); border-radius: 13px; cursor: pointer; transition: 0.2s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute; width: 20px; height: 20px;
+            left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s;
+        }
+        input:checked + .toggle-slider { background: var(--accent); }
+        input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-btn { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--stone); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text-light); cursor: pointer; }
+        .modal-btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); border-color: transparent; color: white; font-weight: 500; }
+        .modal-btn.danger { border-color: var(--error); color: var(--error); }
+
+        /* TOAST */
+        .toast {
+            position: fixed; top: calc(var(--topbar-h) + 70px); left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: var(--text); color: white; padding: 11px 20px;
+            border-radius: 12px; font-size: 13px; font-weight: 500; z-index: 999;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap; max-width: calc(100vw - 32px); text-align: center;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--error); }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="brand">Admin</span>
+        <button class="icon-btn" onclick="logout()">✕</button>
+    </div>
+
+    <div class="segment-wrap" style="position:fixed;top:var(--topbar-h);left:0;right:0;z-index:99;">
+        <div class="segment">
+            <button class="seg-btn active" id="segProducts" onclick="switchTab('products')">Productos</button>
+            <button class="seg-btn" id="segUsers" onclick="switchTab('users')">Usuarios</button>
+        </div>
+    </div>
+
+    <div class="screens">
+        <!-- PRODUCTOS -->
+        <div class="screen active" id="screenProducts">
+            <div class="screen-header">
+                <span class="section-label">Productos</span>
+                <button class="btn-add" onclick="openProductModal()">+ Agregar</button>
+            </div>
+            <div class="item-list" id="productList">
+                <div class="empty-state">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- USUARIOS -->
+        <div class="screen" id="screenUsers">
+            <div class="screen-header">
+                <span class="section-label">Usuarios</span>
+                <button class="btn-add" id="btnAddUser" onclick="openUserModal()">+ Agregar</button>
+            </div>
+            <div class="item-list" id="userList">
+                <div class="empty-state">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM TABS -->
+    <div class="bottom-tabs">
+        <a class="tab-item" href="/index.html"><span class="tab-icon">📋</span><span>Órdenes</span></a>
+        <a class="tab-item" href="/index.html"><span class="tab-icon">🧆</span><span>Carta</span></a>
+        <a class="tab-item" href="/index.html"><span class="tab-icon">💳</span><span>Cobrar</span></a>
+        <a class="tab-item active" href="/admin.html"><span class="tab-icon">⚙️</span><span>Admin</span></a>
+        <a class="tab-item" href="/reports.html"><span class="tab-icon">📊</span><span>Reportes</span></a>
+    </div>
+
+    <!-- MODAL PRODUCTO -->
+    <div class="modal-overlay" id="modalProduct">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-title" id="productModalTitle">Nuevo producto</div>
+            <input type="hidden" id="productId" />
+            <div class="field-group">
+                <div class="field-label">Nombre</div>
+                <input class="field-input" type="text" id="productName" placeholder="Ej: Empanada de carne" />
+            </div>
+            <div class="field-group">
+                <div class="field-label">Precio</div>
+                <input class="field-input" type="number" inputmode="numeric" id="productPrice" placeholder="2500" />
+            </div>
+            <div class="toggle-field">
+                <span class="toggle-field-label">Disponible</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="productActive" checked />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="modal-btns">
+                <button class="modal-btn" onclick="closeModal('modalProduct')">Cancelar</button>
+                <button class="modal-btn primary" onclick="saveProduct()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL USUARIO -->
+    <div class="modal-overlay" id="modalUser">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-title" id="userModalTitle">Nuevo usuario</div>
+            <input type="hidden" id="editUsername" />
+            <div class="field-group">
+                <div class="field-label">Nombre</div>
+                <input class="field-input" type="text" id="userName" placeholder="Nombre completo" />
+            </div>
+            <div class="field-group">
+                <div class="field-label">Usuario</div>
+                <input class="field-input" type="text" id="userUsername" placeholder="mínimo 5 caracteres" autocomplete="off" />
+            </div>
+            <div class="field-group" id="passwordField">
+                <div class="field-label">Contraseña</div>
+                <input class="field-input" type="password" id="userPassword" placeholder="mínimo 4 caracteres" autocomplete="new-password" />
+            </div>
+            <div class="toggle-field" style="margin-bottom:8px;">
+                <span class="toggle-field-label">Administrador</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="userIsAdmin" />
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="modal-btns">
+                <button class="modal-btn" onclick="closeModal('modalUser')">Cancelar</button>
+                <button class="modal-btn primary" onclick="saveUser()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CAMBIAR CONTRASEÑA -->
+    <div class="modal-overlay" id="modalPassword">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-title">Cambiar contraseña</div>
+            <div class="field-group">
+                <div class="field-label">Contraseña actual</div>
+                <input class="field-input" type="password" id="currentPassword" placeholder="••••••••" />
+            </div>
+            <div class="field-group">
+                <div class="field-label">Nueva contraseña</div>
+                <input class="field-input" type="password" id="newPassword" placeholder="••••••••" />
+            </div>
+            <div class="modal-btns">
+                <button class="modal-btn" onclick="closeModal('modalPassword')">Cancelar</button>
+                <button class="modal-btn primary" onclick="savePassword()">Cambiar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        requireAuth();
+
+        let products = [];
+        let users = [];
+        let currentTab = "products";
+
+        async function init() {
+            await loadProducts();
+            if (isAdmin()) {
+                await loadUsers();
+            } else {
+                document.getElementById("segUsers").style.display = "none";
+                document.getElementById("btnAddUser").style.display = "none";
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+            document.getElementById("seg" + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add("active");
+            document.getElementById("screen" + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add("active");
+        }
+
+        // ── PRODUCTOS ──
+        async function loadProducts() {
+            try {
+                const all = isAdmin() ? await request("GET", "/products/todos") : await getProducts();
+                products = all;
+                renderProducts();
+            } catch(e) { showToast("Error cargando productos", "error"); }
+        }
+
+        function renderProducts() {
+            const list = document.getElementById("productList");
+            if (!products.length) { list.innerHTML = '<div class="empty-state">No hay productos aún</div>'; return; }
+            list.innerHTML = products.map(p => `
+                <div class="product-row ${p.active ? '' : 'inactive'}">
+                    <div class="prod-info">
+                        <div class="prod-name">${p.name}</div>
+                        <div class="prod-price">${formatPrice(p.price)}</div>
+                    </div>
+                    <div class="prod-actions">
+                        <button class="toggle-btn ${p.active ? 'active-state' : ''}" onclick="toggleProduct(${p.id}, ${p.active})">
+                            ${p.active ? 'Activo' : 'Inactivo'}
+                        </button>
+                        <button class="action-btn" onclick="openProductModal(${p.id})">✏️</button>
+                        ${isAdmin() ? `<button class="action-btn danger" onclick="handleDeleteProduct(${p.id})">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function openProductModal(id = null) {
+            document.getElementById("productId").value = id || "";
+            document.getElementById("productName").value = "";
+            document.getElementById("productPrice").value = "";
+            document.getElementById("productActive").checked = true;
+            document.getElementById("productModalTitle").textContent = id ? "Editar producto" : "Nuevo producto";
+            if (id) {
+                const p = products.find(p => p.id === id);
+                if (p) {
+                    document.getElementById("productName").value = p.name;
+                    document.getElementById("productPrice").value = p.price;
+                    document.getElementById("productActive").checked = p.active;
+                }
+            }
+            openModal("modalProduct");
+        }
+
+        async function saveProduct() {
+            const id = document.getElementById("productId").value;
+            const name = document.getElementById("productName").value.trim();
+            const price = parseInt(document.getElementById("productPrice").value);
+            const active = document.getElementById("productActive").checked;
+            if (!name) { showToast("El nombre es requerido", "error"); return; }
+            if (!price || price < 100) { showToast("El precio debe ser mayor a 100", "error"); return; }
+            try {
+                if (id) {
+                    await updateProduct(parseInt(id), { name, price, active });
+                    showToast("Producto actualizado", "success");
+                } else {
+                    await createProduct({ name, price, active });
+                    showToast("Producto creado", "success");
+                }
+                closeModal("modalProduct");
+                await loadProducts();
+            } catch(e) { showToast(e.message || "Error al guardar", "error"); }
+        }
+
+        async function toggleProduct(id, current) {
+            try {
+                await updateProduct(id, { active: !current });
+                await loadProducts();
+            } catch(e) { showToast("Error al actualizar", "error"); }
+        }
+
+        async function handleDeleteProduct(id) {
+            if (!confirm("¿Eliminar este producto?")) return;
+            try {
+                await request("DELETE", `/products/${id}`);
+                showToast("Producto eliminado", "success");
+                await loadProducts();
+            } catch(e) { showToast(e.message || "Error al eliminar", "error"); }
+        }
+
+        // ── USUARIOS ──
+        async function loadUsers() {
+            try {
+                users = await getUsers();
+                renderUsers();
+            } catch(e) { showToast("Error cargando usuarios", "error"); }
+        }
+
+        function renderUsers() {
+            const list = document.getElementById("userList");
+            if (!users.length) { list.innerHTML = '<div class="empty-state">No hay usuarios</div>'; return; }
+            list.innerHTML = users.map(u => `
+                <div class="user-row ${u.active ? '' : 'inactive'}">
+                    <div class="user-avatar">${u.is_admin ? '👑' : '👤'}</div>
+                    <div class="user-info">
+                        <div class="user-name">${u.name}
+                            <span class="user-badge-role ${u.is_admin ? 'admin' : 'cajero'}">${u.is_admin ? 'Admin' : 'Cajero'}</span>
+                        </div>
+                        <div class="user-meta">@${u.username} · ${u.active ? 'Activo' : 'Inactivo'}</div>
+                    </div>
+                    <div class="prod-actions">
+                        <button class="action-btn" onclick="openPasswordModal('${u.username}')">🔑</button>
+                        <button class="action-btn" onclick="toggleUser('${u.username}', ${u.active})">
+                            ${u.active ? '🔒' : '🔓'}
+                        </button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function openUserModal() {
+            document.getElementById("userModalTitle").textContent = "Nuevo usuario";
+            document.getElementById("userName").value = "";
+            document.getElementById("userUsername").value = "";
+            document.getElementById("userPassword").value = "";
+            document.getElementById("userIsAdmin").checked = false;
+            document.getElementById("userUsername").disabled = false;
+            document.getElementById("passwordField").style.display = "block";
+            openModal("modalUser");
+        }
+
+        async function saveUser() {
+            const name = document.getElementById("userName").value.trim();
+            const username = document.getElementById("userUsername").value.trim();
+            const password = document.getElementById("userPassword").value;
+            const is_admin = document.getElementById("userIsAdmin").checked;
+            if (!name) { showToast("El nombre es requerido", "error"); return; }
+            if (username.length < 5) { showToast("El usuario debe tener mínimo 5 caracteres", "error"); return; }
+            if (password.length < 4) { showToast("La contraseña debe tener mínimo 4 caracteres", "error"); return; }
+            try {
+                await createUser({ name, username, password, is_admin, active: true });
+                showToast("Usuario creado", "success");
+                closeModal("modalUser");
+                await loadUsers();
+            } catch(e) { showToast(e.message || "Error al crear usuario", "error"); }
+        }
+
+        async function toggleUser(username, current) {
+            try {
+                await toggleActive(username);
+                showToast(current ? "Usuario desactivado" : "Usuario activado", "success");
+                await loadUsers();
+            } catch(e) { showToast(e.message || "Error", "error"); }
+        }
+
+        let passwordTargetUser = null;
+
+        function openPasswordModal(username) {
+            passwordTargetUser = username;
+            document.getElementById("currentPassword").value = "";
+            document.getElementById("newPassword").value = "";
+            openModal("modalPassword");
+        }
+
+        async function savePassword() {
+            const current = document.getElementById("currentPassword").value;
+            const newPwd = document.getElementById("newPassword").value;
+            if (!current || !newPwd) { showToast("Completa ambos campos", "error"); return; }
+            if (newPwd.length < 4) { showToast("La contraseña debe tener mínimo 4 caracteres", "error"); return; }
+            try {
+                await changePassword({ current_password: current, new_password: newPwd });
+                showToast("Contraseña actualizada", "success");
+                closeModal("modalPassword");
+            } catch(e) { showToast(e.message || "Contraseña incorrecta", "error"); }
+        }
+
+        // ── MODAL UTILS ──
+        function openModal(id) {
+            document.getElementById(id).classList.add("show");
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove("show");
+        }
+
+        document.querySelectorAll(".modal-overlay").forEach(overlay => {
+            overlay.addEventListener("click", e => {
+                if (e.target === overlay) overlay.classList.remove("show");
+            });
+        });
+
+        // ── UTILS ──
+        function formatPrice(n) { return "$" + (n || 0).toLocaleString("es-CO"); }
+
+        function showToast(msg, type = "") {
+            const t = document.getElementById("toast");
+            t.textContent = msg; t.className = "toast show " + type;
+            setTimeout(() => t.className = "toast", 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

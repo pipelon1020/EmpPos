@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS — Iniciar sesión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --cream: #FAF8F5;
+            --warm-white: #FFFFFF;
+            --stone: #E8E4DE;
+            --muted: #A89F94;
+            --text: #2C2825;
+            --text-light: #7A726A;
+            --accent: #C4A882;
+            --accent-dark: #A8896A;
+            --error: #C4624A;
+            --shadow: 0 1px 3px rgba(44,40,37,0.06), 0 8px 32px rgba(44,40,37,0.08);
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--cream);
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Fondo decorativo */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(196,168,130,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -20%;
+            left: -15%;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(196,168,130,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .card {
+            background: var(--warm-white);
+            border-radius: 24px;
+            padding: 56px 52px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(232,228,222,0.8);
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 44px;
+        }
+
+        .logo-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(196,168,130,0.3);
+        }
+
+        .logo-icon svg {
+            width: 26px;
+            height: 26px;
+            fill: white;
+        }
+
+        .brand-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--text);
+            letter-spacing: 0.02em;
+            display: block;
+        }
+
+        .brand-sub {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .divider {
+            width: 40px;
+            height: 1px;
+            background: var(--stone);
+            margin: 20px auto 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-light);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--stone);
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            background: var(--cream);
+            outline: none;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+        }
+
+        input::placeholder { color: var(--muted); }
+
+        input:focus {
+            border-color: var(--accent);
+            background: var(--warm-white);
+            box-shadow: 0 0 0 3px rgba(196,168,130,0.12);
+        }
+
+        input.error-input {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px rgba(196,98,74,0.1);
+        }
+
+        .error-msg {
+            font-size: 12px;
+            color: var(--error);
+            margin-top: 8px;
+            display: none;
+            animation: shake 0.4s ease;
+        }
+
+        .error-msg.show { display: block; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(196,168,130,0.35);
+        }
+
+        .btn:active { transform: translateY(0); }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-text { transition: opacity 0.2s; }
+        .btn.loading .btn-text { opacity: 0; }
+
+        .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .btn.loading .spinner { opacity: 1; }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 0.03em;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 40px 28px; margin: 16px; border-radius: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26C17.81 13.47 19 11.38 19 9c0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5 2.24-5 5-5zm-2 13v-1h4v1H10zm1 3v-1h2v1h-2z"/>
+                </svg>
+            </div>
+            <span class="brand-name">Punto de Venta</span>
+            <span class="brand-sub">Acceso al sistema</span>
+            <div class="divider"></div>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" placeholder="Tu usuario" autocomplete="username" />
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+                <p class="error-msg" id="errorMsg">Usuario o contraseña incorrectos</p>
+            </div>
+            <button type="submit" class="btn" id="loginBtn">
+                <span class="btn-text">Ingresar</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
+
+        <p class="footer-note">Sistema de gestión de empanadas</p>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        if (isLoggedIn()) window.location.href = "/index.html";
+
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            const btn = document.getElementById("loginBtn");
+            const errorMsg = document.getElementById("errorMsg");
+            const usernameInput = document.getElementById("username");
+            const passwordInput = document.getElementById("password");
+
+            errorMsg.classList.remove("show");
+            usernameInput.classList.remove("error-input");
+            passwordInput.classList.remove("error-input");
+
+            if (!username || !password) {
+                errorMsg.textContent = "Completa todos los campos";
+                errorMsg.classList.add("show");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add("loading");
+
+            try {
+                const data = await login(username, password);
+                window.location.href = "/index.html";
+            } catch (err) {
+                errorMsg.textContent = err.message || "Usuario o contraseña incorrectos";
+                errorMsg.classList.add("show");
+                usernameInput.classList.add("error-input");
+                passwordInput.classList.add("error-input");
+                passwordInput.value = "";
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove("loading");
+            }
+        });
+    </script>
+</body>
+</html>

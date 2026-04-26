@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>POS — Reportes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --cream: #FAF8F5;
+            --white: #FFFFFF;
+            --stone: #E8E4DE;
+            --muted: #A89F94;
+            --text: #2C2825;
+            --text-light: #7A726A;
+            --accent: #C4A882;
+            --accent-dark: #A8896A;
+            --success: #5A8A6A;
+            --success-bg: #EEF5F0;
+            --error: #C4624A;
+            --tab-h: 64px;
+            --topbar-h: 52px;
+        }
+
+        html { height: 100%; }
+        body { height: 100%; background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(--text); overflow: hidden; }
+
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+            background: var(--white); border-bottom: 1px solid var(--stone);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 18px; z-index: 100;
+        }
+        .brand { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; letter-spacing: 0.02em; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--stone);
+            background: transparent; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-light); font-size: 16px;
+        }
+
+        /* PERIOD SELECTOR */
+        .period-wrap {
+            position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 99;
+            background: var(--white); border-bottom: 1px solid var(--stone);
+            padding: 12px 16px;
+        }
+        .segment {
+            display: flex; background: var(--cream); border-radius: 12px; padding: 3px;
+        }
+        .seg-btn {
+            flex: 1; padding: 9px; border-radius: 10px; border: none; background: transparent;
+            font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text-light);
+            cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        .seg-btn.active { background: var(--white); color: var(--text); font-weight: 500; box-shadow: 0 1px 4px rgba(44,40,37,0.1); }
+
+        /* CONTENT */
+        .content {
+            position: fixed;
+            top: calc(var(--topbar-h) + 58px);
+            bottom: var(--tab-h);
+            left: 0; right: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+
+        /* SUMMARY CARDS */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: var(--white);
+            border: 1px solid var(--stone);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .summary-card.full { grid-column: span 2; }
+
+        .summary-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .summary-value.big { font-size: 36px; }
+        .summary-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+        /* PAYMENT BREAKDOWN */
+        .section-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+
+        .payment-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--stone);
+        }
+        .payment-row:last-child { border-bottom: none; }
+
+        .payment-name {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; font-weight: 500;
+        }
+
+        .payment-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+
+        .payment-amount { font-size: 14px; font-weight: 500; }
+
+        .payment-bar-wrap { height: 4px; background: var(--stone); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .payment-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+        /* TOP PRODUCTS */
+        .product-rank {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--stone);
+        }
+        .product-rank:last-child { border-bottom: none; }
+
+        .rank-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--cream);
+            border: 1px solid var(--stone);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 500; color: var(--text-light);
+            flex-shrink: 0;
+        }
+        .rank-num.gold { background: rgba(196,168,130,0.2); border-color: var(--accent); color: var(--accent-dark); }
+
+        .rank-info { flex: 1; }
+        .rank-name { font-size: 14px; font-weight: 500; }
+        .rank-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        .rank-revenue { font-size: 14px; font-weight: 500; text-align: right; }
+        .rank-qty { font-size: 11px; color: var(--muted); margin-top: 2px; text-align: right; }
+
+        /* DAILY BREAKDOWN */
+        .day-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0; border-bottom: 1px solid var(--stone);
+        }
+        .day-row:last-child { border-bottom: none; }
+        .day-date { font-size: 13px; font-weight: 500; min-width: 80px; }
+        .day-bar-wrap { flex: 1; height: 6px; background: var(--stone); border-radius: 3px; overflow: hidden; }
+        .day-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); border-radius: 3px; transition: width 0.4s ease; }
+        .day-amount { font-size: 13px; font-weight: 500; min-width: 70px; text-align: right; }
+
+        /* SECTION CARD */
+        .section-card {
+            background: var(--white);
+            border: 1px solid var(--stone);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* LOADING / EMPTY */
+        .loading { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+        .empty { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+        /* BOTTOM TABS */
+        .bottom-tabs {
+            position: fixed; bottom: 0; left: 0; right: 0; height: var(--tab-h);
+            background: var(--white); border-top: 1px solid var(--stone); display: flex; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 3px; cursor: pointer; border: none; background: transparent;
+            color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px;
+            -webkit-tap-highlight-color: transparent; text-decoration: none;
+        }
+        .tab-item.active { color: var(--accent-dark); font-weight: 500; }
+        .tab-icon { font-size: 20px; line-height: 1; }
+
+        /* TOAST */
+        .toast {
+            position: fixed; top: calc(var(--topbar-h) + 70px); left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: var(--text); color: white; padding: 11px 20px;
+            border-radius: 12px; font-size: 13px; font-weight: 500; z-index: 999;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap; max-width: calc(100vw - 32px); text-align: center;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: var(--error); }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="brand">Reportes</span>
+        <button class="icon-btn" onclick="logout()">✕</button>
+    </div>
+
+    <div class="period-wrap">
+        <div class="segment">
+            <button class="seg-btn active" onclick="setPeriod('daily', this)">Hoy</button>
+            <button class="seg-btn" onclick="setPeriod('weekly', this)">Semana</button>
+            <button class="seg-btn" onclick="setPeriod('monthly', this)">Mes</button>
+        </div>
+    </div>
+
+    <div class="content" id="content">
+        <div class="loading">Cargando reportes...</div>
+    </div>
+
+    <!-- BOTTOM TABS -->
+    <div class="bottom-tabs">
+        <a class="tab-item" href="/index.html"><span class="tab-icon">📋</span><span>Órdenes</span></a>
+        <a class="tab-item" href="/index.html"><span class="tab-icon">🧆</span><span>Carta</span></a>
+        <a class="tab-item" href="/index.html"><span class="tab-icon">💳</span><span>Cobrar</span></a>
+        <a class="tab-item" href="/admin.html"><span class="tab-icon">⚙️</span><span>Admin</span></a>
+        <a class="tab-item active" href="/reports.html"><span class="tab-icon">📊</span><span>Reportes</span></a>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        requireAuth();
+
+        let currentPeriod = "daily";
+
+        const periodLabel = { daily: "hoy", weekly: "esta semana", monthly: "este mes" };
+        const paymentColors = {
+            efectivo: "#C4A882", nequi: "#7B68EE", daviplata: "#E8A87C",
+            tarjeta: "#82C4A4", transferencia: "#A8C4E0"
+        };
+        const paymentEmoji = {
+            efectivo: "💵", nequi: "📱", daviplata: "📲", tarjeta: "💳", transferencia: "🏦"
+        };
+
+        async function init() {
+            await loadReports();
+        }
+
+        async function setPeriod(period, btn) {
+            document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentPeriod = period;
+            await loadReports();
+        }
+
+        async function loadReports() {
+            const content = document.getElementById("content");
+            content.innerHTML = '<div class="loading">Cargando...</div>';
+            try {
+                const [summary, topProducts, breakdown] = await Promise.all([
+                    getSummary(currentPeriod),
+                    getTopProducts(currentPeriod),
+                    currentPeriod !== "daily" ? getDailyBreakdown(currentPeriod) : null
+                ]);
+                renderReports(summary, topProducts, breakdown);
+            } catch(e) {
+                content.innerHTML = '<div class="loading">Error cargando reportes</div>';
+                showToast("Error cargando datos", "error");
+            }
+        }
+
+        function renderReports(summary, topProducts, breakdown) {
+            const content = document.getElementById("content");
+            const label = periodLabel[currentPeriod];
+            const totalByPayment = Object.values(summary.by_payment_type || {}).reduce((s, v) => s + v, 0);
+
+            let html = "";
+
+            // RESUMEN PRINCIPAL
+            html += `
+                <div class="summary-grid">
+                    <div class="summary-card full">
+                        <div class="summary-label">Ganancias ${label}</div>
+                        <div class="summary-value big">${formatPrice(summary.total_revenue)}</div>
+                        <div class="summary-sub">${summary.total_orders} ${summary.total_orders === 1 ? 'orden' : 'órdenes'} cerradas</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Promedio</div>
+                        <div class="summary-value">${summary.total_orders > 0 ? formatPrice(Math.round(summary.total_revenue / summary.total_orders)) : '$0'}</div>
+                        <div class="summary-sub">por orden</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Órdenes</div>
+                        <div class="summary-value">${summary.total_orders}</div>
+                        <div class="summary-sub">${label}</div>
+                    </div>
+                </div>
+            `;
+
+            // DESGLOSE POR PAGO
+            if (summary.total_revenue > 0) {
+                const paymentEntries = Object.entries(summary.by_payment_type || {}).sort((a, b) => b[1] - a[1]);
+                html += `
+                    <div class="section-card">
+                        <div class="section-title">Por tipo de pago</div>
+                        ${paymentEntries.map(([type, amount]) => {
+                            const pct = totalByPayment > 0 ? Math.round(amount / totalByPayment * 100) : 0;
+                            return `
+                                <div class="payment-row">
+                                    <div>
+                                        <div class="payment-name">
+                                            <span>${paymentEmoji[type] || '💰'}</span>
+                                            <span>${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                                        </div>
+                                        <div class="payment-bar-wrap">
+                                            <div class="payment-bar" style="width:${pct}%;background:${paymentColors[type] || 'var(--accent)'}"></div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right">
+                                        <div class="payment-amount">${formatPrice(amount)}</div>
+                                        <div style="font-size:11px;color:var(--muted)">${pct}%</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
+                `;
+            }
+
+            // TOP PRODUCTOS
+            if (topProducts.length) {
+                html += `
+                    <div class="section-card">
+                        <div class="section-title">Más vendidos ${label}</div>
+                        ${topProducts.map((p, i) => `
+                            <div class="product-rank">
+                                <div class="rank-num ${i === 0 ? 'gold' : ''}">${i + 1}</div>
+                                <div class="rank-info">
+                                    <div class="rank-name">${p.product_name}</div>
+                                    <div class="rank-sub">${p.total_quantity} unidades vendidas</div>
+                                </div>
+                                <div>
+                                    <div class="rank-revenue">${formatPrice(p.total_revenue)}</div>
+                                </div>
+                            </div>
+                        `).join("")}
+                    </div>
+                `;
+            } else {
+                html += `<div class="section-card"><div class="empty">Sin ventas ${label}</div></div>`;
+            }
+
+            // DESGLOSE DIARIO (solo semana/mes)
+            if (breakdown && Object.keys(breakdown.breakdown).length > 0) {
+                const days = Object.entries(breakdown.breakdown).sort((a, b) => b[0].localeCompare(a[0]));
+                const maxRevenue = Math.max(...days.map(d => d[1].total_revenue));
+                html += `
+                    <div class="section-card">
+                        <div class="section-title">Desglose por día</div>
+                        ${days.map(([date, data]) => {
+                            const pct = maxRevenue > 0 ? Math.round(data.total_revenue / maxRevenue * 100) : 0;
+                            const d = new Date(date + "T00:00:00");
+                            const label = d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "short" });
+                            return `
+                                <div class="day-row">
+                                    <div class="day-date">${label}</div>
+                                    <div class="day-bar-wrap">
+                                        <div class="day-bar" style="width:${pct}%"></div>
+                                    </div>
+                                    <div class="day-amount">${formatPrice(data.total_revenue)}</div>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+        }
+
+        function formatPrice(n) { return "$" + (n || 0).toLocaleString("es-CO"); }
+
+        function showToast(msg, type = "") {
+            const t = document.getElementById("toast");
+            t.textContent = msg; t.className = "toast show " + type;
+            setTimeout(() => t.className = "toast", 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
