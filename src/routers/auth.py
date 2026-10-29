@@ -68,6 +68,25 @@ def create_user(user: UserCreate, db: Session = Depends(get_db), current_user: U
     db.refresh(new_user)
     return new_user
 
+# --- Crear usuario (solo user) ---
+
+@router.post("/users_f", response_model=UserOut)
+def create_user_f(user: UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.username == user.username).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El username ya existe")
+    new_user = User(
+        username=user.username,
+        name=user.name,
+        password_hash=hash_password(user.password),
+        is_admin=user.is_admin,
+        active=user.active
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
 # --- Listar usuarios (solo admin) ---
 
 @router.get("/users", response_model=list[UserOut])
