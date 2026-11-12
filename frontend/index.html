@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>POS — Órdenes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --cream: #FAF8F5;
+            --white: #FFFFFF;
+            --stone: #E8E4DE;
+            --muted: #A89F94;
+            --text: #2C2825;
+            --text-light: #7A726A;
+            --accent: #C4A882;
+            --accent-dark: #A8896A;
+            --success: #5A8A6A;
+            --success-bg: #EEF5F0;
+            --error: #C4624A;
+            --error-bg: #FDF0ED;
+            --tab-h: 64px;
+            --topbar-h: 52px;
+        }
+
+        html { height: 100%; }
+        body { height: 100%; background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(--text); overflow: hidden; }
+
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--topbar-h);
+            background: var(--white); border-bottom: 1px solid var(--stone);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 18px; z-index: 100;
+        }
+
+        .brand { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; letter-spacing: 0.02em; }
+
+        .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+        .user-pill { font-size: 12px; color: var(--muted); background: var(--cream); border: 1px solid var(--stone); border-radius: 20px; padding: 4px 10px; }
+
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--stone);
+            background: transparent; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-light); font-size: 16px; transition: all 0.15s;
+        }
+        .icon-btn:hover { background: var(--error-bg); color: var(--error); border-color: var(--error); }
+
+        .screens { position: fixed; top: var(--topbar-h); bottom: var(--tab-h); left: 0; right: 0; overflow: hidden; }
+
+        .screen {
+            position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            opacity: 0; pointer-events: none; transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+        /* SCREEN ORDENES */
+        #screenOrders { padding: 16px; }
+
+        .orders-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+        .section-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .btn-new-order {
+            padding: 7px 14px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+        }
+
+        .orders-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .order-card {
+            background: var(--white); border: 1px solid var(--stone); border-radius: 16px;
+            padding: 16px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 14px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .order-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,168,130,0.15); }
+
+        .order-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+        .order-info { flex: 1; }
+        .order-name { font-size: 15px; font-weight: 500; }
+        .order-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .order-total { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty-state p { font-size: 13px; margin-top: 8px; }
+
+        /* SCREEN CARTA */
+        #screenMenu { padding: 16px; }
+
+        .menu-bar {
+            background: var(--white); border: 1px solid var(--stone); border-radius: 12px;
+            padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .menu-bar-name { font-size: 13px; font-weight: 500; }
+        .menu-bar-total { font-size: 13px; color: var(--accent-dark); font-weight: 500; }
+
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+        .product-card {
+            background: var(--white); border: 1px solid var(--stone); border-radius: 14px;
+            padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .product-card:active { transform: scale(0.97); border-color: var(--accent); background: var(--cream); }
+        .product-name { font-size: 14px; font-weight: 500; margin-bottom: 6px; line-height: 1.3; }
+        .product-price { font-size: 13px; color: var(--accent-dark); font-weight: 500; }
+
+        /* SCREEN COBRO */
+        #screenCheckout { padding: 16px 16px 24px; }
+
+        .checkout-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; margin-bottom: 16px; }
+
+        .checkout-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--stone);
+        }
+        .checkout-item:last-child { border-bottom: none; }
+        .ci-info { flex: 1; }
+        .ci-name { font-size: 14px; font-weight: 500; }
+        .ci-uprice { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+        .qty-ctrl { display: flex; align-items: center; gap: 8px; }
+        .qty-btn {
+            width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--stone);
+            background: var(--cream); font-size: 18px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-light); -webkit-tap-highlight-color: transparent;
+        }
+        .qty-btn:active { background: var(--stone); }
+        .qty-num { font-size: 15px; font-weight: 500; min-width: 22px; text-align: center; }
+        .ci-subtotal { font-size: 14px; font-weight: 500; min-width: 64px; text-align: right; }
+
+        .total-box { background: var(--white); border: 1px solid var(--stone); border-radius: 16px; padding: 16px; margin: 16px 0; }
+        .total-row { display: flex; justify-content: space-between; align-items: baseline; }
+        .total-label { font-size: 13px; color: var(--text-light); }
+        .total-amount { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 500; }
+
+        .payment-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+        .payment-opts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .pay-btn {
+            padding: 8px 16px; border-radius: 10px; border: 1px solid var(--stone);
+            background: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 13px;
+            color: var(--text-light); cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .pay-btn.selected { background: var(--accent); border-color: var(--accent); color: white; font-weight: 500; }
+
+        .efectivo-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .field-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+        .field-input {
+            width: 100%; padding: 12px 14px; border: 1px solid var(--stone); border-radius: 12px;
+            font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500;
+            color: var(--text); background: var(--cream); outline: none; -webkit-appearance: none;
+        }
+        .field-input:focus { border-color: var(--accent); background: white; }
+        .vuelto-val { padding: 12px 14px; border-radius: 12px; background: var(--success-bg); border: 1px solid rgba(90,138,106,0.2); font-size: 16px; font-weight: 500; color: var(--success); }
+        .vuelto-val.neg { background: var(--error-bg); border-color: rgba(196,98,74,0.2); color: var(--error); }
+
+        .btn-cobrar {
+            width: 100%; padding: 16px; border-radius: 14px; border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500;
+            cursor: pointer; margin-bottom: 10px; -webkit-tap-highlight-color: transparent;
+        }
+        .btn-cobrar:active { opacity: 0.85; }
+        .btn-cobrar:disabled { opacity: 0.5; }
+        .btn-secondary {
+            width: 100%; padding: 13px; border-radius: 12px; border: 1px solid var(--stone);
+            background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text-light); cursor: pointer;
+        }
+        .btn-secondary:active { background: var(--error-bg); color: var(--error); }
+
+        /* BOTTOM TABS */
+        .bottom-tabs {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--tab-h); background: var(--white); border-top: 1px solid var(--stone);
+            display: flex; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 3px; cursor: pointer; border: none; background: transparent;
+            color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px;
+            transition: color 0.15s; -webkit-tap-highlight-color: transparent;
+            text-decoration: none; position: relative;
+        }
+        .tab-item.active { color: var(--accent-dark); font-weight: 500; }
+        .tab-icon { font-size: 20px; line-height: 1; }
+        .tab-badge {
+            position: absolute; top: 6px; right: calc(50% - 18px);
+            background: var(--accent); color: white; font-size: 10px; font-weight: 500;
+            min-width: 16px; height: 16px; border-radius: 8px;
+            display: none; align-items: center; justify-content: center; padding: 0 4px;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(44,40,37,0.45);
+            z-index: 300; display: flex; align-items: flex-end;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-sheet {
+            background: var(--white); border-radius: 24px 24px 0 0;
+            padding: 20px 24px 40px; width: 100%;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.show .modal-sheet { transform: translateY(0); }
+        .modal-handle { width: 36px; height: 4px; background: var(--stone); border-radius: 2px; margin: 0 auto 20px; }
+        .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; margin-bottom: 16px; }
+        .modal-input {
+            width: 100%; padding: 14px 16px; border: 1px solid var(--stone); border-radius: 14px;
+            font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--text);
+            background: var(--cream); outline: none; margin-bottom: 16px; -webkit-appearance: none;
+        }
+        .modal-input:focus { border-color: var(--accent); background: white; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btn { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid var(--stone); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text-light); cursor: pointer; }
+        .modal-btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); border-color: transparent; color: white; font-weight: 500; }
+
+        /* TOAST */
+        .toast {
+            position: fixed; top: calc(var(--topbar-h) + 12px); left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: var(--text); color: white; padding: 11px 20px;
+            border-radius: 12px; font-size: 13px; font-weight: 500; z-index: 999;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap; max-width: calc(100vw - 32px); text-align: center;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--error); }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="brand">Punto de Venta</span>
+        <div class="topbar-right">
+            <span class="user-pill" id="userPill">—</span>
+            <button class="icon-btn" onclick="logout()" title="Salir">✕</button>
+        </div>
+    </div>
+
+    <div class="screens">
+        <!-- ÓRDENES -->
+        <div class="screen active" id="screenOrders">
+            <div class="orders-header">
+                <span class="section-label">Órdenes activas</span>
+                <button class="btn-new-order" id="btnNewOrder" onclick="openModal()">+ Nueva orden</button>
+            </div>
+            <div class="orders-list" id="ordersList">
+                <div class="empty-state"><div style="font-size:40px">☕</div><p>No hay órdenes activas</p></div>
+            </div>
+        </div>
+
+        <!-- CARTA -->
+        <div class="screen" id="screenMenu">
+            <div class="menu-bar">
+                <span class="menu-bar-name" id="menuOrderName">Sin orden activa</span>
+                <span class="menu-bar-total" id="menuOrderTotal">$0</span>
+            </div>
+            <div class="products-grid" id="productsGrid">
+                <div style="grid-column:span 2;text-align:center;padding:40px;color:var(--muted);font-size:13px;">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- COBRO -->
+        <div class="screen" id="screenCheckout">
+            <div class="checkout-title" id="checkoutTitle">Orden</div>
+            <div id="checkoutItems"></div>
+            <div class="total-box">
+                <div class="total-row">
+                    <span class="total-label">Total</span>
+                    <span class="total-amount" id="checkoutTotal">$0</span>
+                </div>
+            </div>
+            <div class="payment-label">Tipo de pago</div>
+            <div class="payment-opts">
+                <button class="pay-btn selected" data-type="efectivo" onclick="selectPayment(this)">Efectivo</button>
+                <button class="pay-btn" data-type="nequi" onclick="selectPayment(this)">Nequi</button>
+                <button class="pay-btn" data-type="daviplata" onclick="selectPayment(this)">Daviplata</button>
+            </div>
+            <div class="efectivo-fields" id="efectivoFields">
+                <div>
+                    <div class="field-label">Recibido</div>
+                    <input class="field-input" type="number" inputmode="numeric" id="amountReceived" placeholder="0" oninput="calcChange()" />
+                </div>
+                <div>
+                    <div class="field-label">Vuelto</div>
+                    <div class="vuelto-val" id="changeDisplay">$0</div>
+                </div>
+            </div>
+            <button class="btn-cobrar" id="btnCobrar" onclick="cobrarOrden()">Cobrar</button>
+            <button class="btn-secondary" onclick="cancelarOrden()">Cancelar orden</button>
+        </div>
+    </div>
+
+    <!-- BOTTOM TABS -->
+    <div class="bottom-tabs">
+        <button class="tab-item active" id="tabOrders" onclick="showScreen('orders')">
+            <span class="tab-icon">📋</span>
+            <span>Órdenes</span>
+            <span class="tab-badge" id="ordersBadge">0</span>
+        </button>
+        <button class="tab-item" id="tabMenu" onclick="showScreen('menu')">
+            <span class="tab-icon">🧆</span>
+            <span>Carta</span>
+        </button>
+        <button class="tab-item" id="tabCheckout" onclick="showScreen('checkout')">
+            <span class="tab-icon">💳</span>
+            <span>Cobrar</span>
+        </button>
+        <a class="tab-item" href="/admin.html">
+            <span class="tab-icon">⚙️</span>
+            <span>Admin</span>
+        </a>
+        <a class="tab-item" href="/reports.html">
+            <span class="tab-icon">📊</span>
+            <span>Reportes</span>
+        </a>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-title">Nueva orden</div>
+            <input class="modal-input" type="text" id="orderNameInput" placeholder="Ej: Mesa 1, Don Carlos..." maxlength="50" />
+            <div class="modal-btns">
+                <button class="modal-btn" onclick="closeModal()">Cancelar</button>
+                <button class="modal-btn primary" onclick="confirmNewOrder()">Crear</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        requireAuth();
+
+        let products = [];
+        let orders = [];
+        let activeOrderId = null;
+        let selectedPayment = "efectivo";
+        let orderCounter = 1;
+
+        async function init() {
+            document.getElementById("userPill").textContent = localStorage.getItem("pos_username") || "Usuario";
+            try {
+                products = await getProducts();
+            } catch(e) {
+                showToast("Error cargando productos", "error");
+            }
+            renderOrders();
+        }
+
+        function showScreen(name) {
+            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+            document.querySelectorAll(".tab-item").forEach(t => t.classList.remove("active"));
+            const screenId = "screen" + name.charAt(0).toUpperCase() + name.slice(1);
+            const tabId = "tab" + name.charAt(0).toUpperCase() + name.slice(1);
+            document.getElementById(screenId)?.classList.add("active");
+            document.getElementById(tabId)?.classList.add("active");
+            if (name === "menu") renderMenu();
+            if (name === "checkout") renderCheckout();
+        }
+
+        // ── ÓRDENES ──
+        function renderOrders() {
+            const list = document.getElementById("ordersList");
+            document.getElementById("btnNewOrder").style.display = orders.length >= 6 ? "none" : "inline-block";
+            const badge = document.getElementById("ordersBadge");
+            if (orders.length) { badge.textContent = orders.length; badge.style.display = "flex"; }
+            else badge.style.display = "none";
+
+            if (!orders.length) {
+                list.innerHTML = `<div class="empty-state"><div style="font-size:40px">☕</div><p>No hay órdenes activas</p></div>`;
+                return;
+            }
+            list.innerHTML = orders.map(o => {
+                const total = calcTotal(o);
+                const count = o.items.reduce((s, i) => s + i.quantity, 0);
+                return `<div class="order-card ${o.id === activeOrderId ? 'selected' : ''}" onclick="selectOrder('${o.id}')">
+                    <div class="order-dot"></div>
+                    <div class="order-info">
+                        <div class="order-name">${o.name}</div>
+                        <div class="order-sub">${count} ${count === 1 ? 'item' : 'items'}</div>
+                    </div>
+                    <div class="order-total">${formatPrice(total)}</div>
+                </div>`;
+            }).join("");
+        }
+
+        function selectOrder(id) {
+            activeOrderId = id;
+            renderOrders();
+            showScreen("menu");
+        }
+
+        function getActiveOrder() { return orders.find(o => o.id === activeOrderId); }
+        function calcTotal(order) { return order.items.reduce((s, i) => s + i.unit_price * i.quantity, 0); }
+
+        // ── CARTA ──
+        function renderMenu() {
+            const order = getActiveOrder();
+            document.getElementById("menuOrderName").textContent = order ? order.name : "Sin orden activa";
+            document.getElementById("menuOrderTotal").textContent = order ? formatPrice(calcTotal(order)) : "Crea una orden primero";
+            const grid = document.getElementById("productsGrid");
+            if (!products.length) {
+                grid.innerHTML = `<div style="grid-column:span 2;text-align:center;padding:40px;color:var(--muted);font-size:13px;">No hay productos. <a href="/admin.html" style="color:var(--accent)">Ir a admin</a></div>`;
+                return;
+            }
+            grid.innerHTML = products.map(p => `
+                <div class="product-card" onclick="addProduct(${p.id})">
+                    <div class="product-name">${p.name}</div>
+                    <div class="product-price">${formatPrice(p.price)}</div>
+                </div>
+            `).join("");
+        }
+
+        function addProduct(productId) {
+            if (!activeOrderId) { showToast("Crea una orden primero", "error"); showScreen("orders"); return; }
+            const order = getActiveOrder();
+            const product = products.find(p => p.id === productId);
+            if (!product || !order) return;
+            const existing = order.items.find(i => i.product_id === productId);
+            if (existing) existing.quantity++;
+            else order.items.push({ product_id: product.id, product_name: product.name, unit_price: product.price, quantity: 1 });
+            document.getElementById("menuOrderTotal").textContent = formatPrice(calcTotal(order));
+            renderOrders();
+            showToast(`${product.name} agregado`, "success");
+        }
+
+        // ── COBRO ──
+        function renderCheckout() {
+            const order = getActiveOrder();
+            if (!order) {
+                document.getElementById("checkoutTitle").textContent = "Sin orden activa";
+                document.getElementById("checkoutItems").innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Selecciona una orden primero</div>`;
+                document.getElementById("checkoutTotal").textContent = "$0";
+                return;
+            }
+            document.getElementById("checkoutTitle").textContent = order.name;
+            document.getElementById("checkoutTotal").textContent = formatPrice(calcTotal(order));
+            if (!order.items.length) {
+                document.getElementById("checkoutItems").innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Orden vacía — agrega productos desde Carta</div>`;
+                return;
+            }
+            document.getElementById("checkoutItems").innerHTML = order.items.map((item, idx) => `
+                <div class="checkout-item">
+                    <div class="ci-info">
+                        <div class="ci-name">${item.product_name}</div>
+                        <div class="ci-uprice">${formatPrice(item.unit_price)} c/u</div>
+                    </div>
+                    <div class="qty-ctrl">
+                        <button class="qty-btn" onclick="changeQty(${idx}, -1)">−</button>
+                        <span class="qty-num">${item.quantity}</span>
+                        <button class="qty-btn" onclick="changeQty(${idx}, 1)">+</button>
+                    </div>
+                    <div class="ci-subtotal">${formatPrice(item.unit_price * item.quantity)}</div>
+                </div>
+            `).join("");
+        }
+
+        function changeQty(idx, delta) {
+            const order = getActiveOrder();
+            if (!order) return;
+            order.items[idx].quantity += delta;
+            if (order.items[idx].quantity <= 0) order.items.splice(idx, 1);
+            renderCheckout();
+            renderOrders();
+        }
+
+        function selectPayment(btn) {
+            document.querySelectorAll(".pay-btn").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            selectedPayment = btn.dataset.type;
+            document.getElementById("efectivoFields").style.display = selectedPayment === "efectivo" ? "grid" : "none";
+            if (selectedPayment !== "efectivo") document.getElementById("amountReceived").value = "";
+        }
+
+        function calcChange() {
+            const order = getActiveOrder();
+            if (!order) return;
+            const total = calcTotal(order);
+            const received = parseInt(document.getElementById("amountReceived").value) || 0;
+            const change = received - total;
+            const el = document.getElementById("changeDisplay");
+            el.textContent = formatPrice(Math.abs(change));
+            el.className = "vuelto-val" + (change < 0 ? " neg" : "");
+        }
+
+        async function cobrarOrden() {
+            const order = getActiveOrder();
+            if (!order || !order.items.length) { showToast("La orden está vacía", "error"); return; }
+            const total = calcTotal(order);
+            if (selectedPayment === "efectivo") {
+                const received = parseInt(document.getElementById("amountReceived").value) || 0;
+                if (received < total) { showToast("El monto recibido es menor al total", "error"); return; }
+            }
+            const received = selectedPayment === "efectivo" ? parseInt(document.getElementById("amountReceived").value) : total;
+            const btn = document.getElementById("btnCobrar");
+            btn.disabled = true; btn.textContent = "Guardando...";
+            try {
+                await closeOrder({ name: order.name, items: order.items, payment_type: selectedPayment, total, amount_received: received });
+                showToast(`"${order.name}" cobrada ✓`, "success");
+                orders = orders.filter(o => o.id !== activeOrderId);
+                activeOrderId = orders.length ? orders[0].id : null;
+                document.getElementById("amountReceived").value = "";
+                renderOrders();
+                showScreen("orders");
+            } catch(e) {
+                showToast(e.message || "Error al cobrar", "error");
+            } finally {
+                btn.disabled = false; btn.textContent = "Cobrar";
+            }
+        }
+
+        function cancelarOrden() {
+            if (!confirm("¿Cancelar esta orden?")) return;
+            orders = orders.filter(o => o.id !== activeOrderId);
+            activeOrderId = orders.length ? orders[0].id : null;
+            renderOrders();
+            showScreen("orders");
+        }
+
+        function openModal() {
+        confirmNewOrder();
+        }
+
+        function confirmNewOrder() {
+            const name = `Orden ${orderCounter}`;
+            orders.push({ id: "order_" + Date.now(), name, items: [] });
+            activeOrderId = orders[orders.length - 1].id;
+            orderCounter++;
+            renderOrders();
+            showScreen("menu");
+        }
+        document.getElementById("modalOverlay").addEventListener("click", e => { if (e.target === e.currentTarget) closeModal(); });
+        document.getElementById("orderNameInput").addEventListener("keydown", e => { if (e.key === "Enter") confirmNewOrder(); });
+
+        function formatPrice(n) { return "$" + (n || 0).toLocaleString("es-CO"); }
+
+        function showToast(msg, type = "") {
+            const t = document.getElementById("toast");
+            t.textContent = msg; t.className = "toast show " + type;
+            setTimeout(() => t.className = "toast", 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
